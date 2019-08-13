@@ -1,0 +1,33 @@
+---
+- set_fact:
+    working_dir: "{{ role_path }}/temp"
+
+- name: clean working directories
+  file:
+    state: absent
+    path: "{{ working_dir }}/"
+
+- name: create working directories
+  file:
+    state: directory
+    path: "{{ working_dir }}/"
+
+- name: prepare cordapps
+  copy:
+    src: "{{ item }}"
+    dest: "{{ working_dir }}"
+  loop: "{{ cordapp_jars }}"
+
+- name: prepare Dockerfile
+  template:
+    src: template.Dockerfile
+    dest: "{{ working_dir }}/Dockerfile"
+
+- name: build image
+  shell: "docker build -t {{ cr_url }}/{{ project_code }}/trading-corda:latest ."
+  args: { chdir: "{{ working_dir }}" }
+
+- name: push image
+  shell: "docker push {{ cr_url }}/{{ project_code }}/trading-corda:latest"
+  args: { chdir: "{{ working_dir }}" }
+

@@ -1,0 +1,95 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trading-party-{{ party_name }}
+  namespace: {{ k8s_namespace }}
+data:
+  node.conf: |
+    myLegalName="{{ x500_name }}"
+    p2pAddress="localhost:10007"
+    rpcSettings {
+        address="localhost:10008"
+        adminAddress="localhost:10048"
+    }
+    rpcUsers=[
+        {
+            password=test
+            permissions=[
+                ALL
+            ]
+            user=user1
+        }
+    ]
+    webAddress="localhost:10009"
+    compatibilityZoneURL="http://network-map:8080"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trading-party-{{ party_name }}
+  namespace: {{ k8s_namespace }}
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels: 
+        app: trading-party-{{ party_name }}
+        namespace: {{ k8s_namespace }}
+    spec:
+      volumes:
+        - name: node-config
+          configMap:
+            name: trading-party-{{ party_name }}
+            items:
+              - key: node.conf
+                path: node.conf
+        - name: certificates
+          emptyDir: {}
+        - name: node-infos
+          emptyDir: {}
+      initContainers:
+        - name: join-corda-network
+          image: "{{ cr_url }}/{{ project_code }}/trading-corda:latest"
+          workingDir: /opt/corda/
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              date
+              if [ -z "$(ls -A /opt/shared/node-infos)" ]
+              then
+                wget http://network-map:8080/network-map/truststore -O certificates/network-truststore.jks
+                java -jar corda.jar --initial-registration --network-root-truststore certificates/network-truststore.jks --network-root-truststore-password trustpass
+              fi
+              exit 0
+          volumeMounts:
+            - name: node-config
+              mountPath: /opt/corda/node.conf
+              subPath: node.conf
+            - name: certificates
+              mountPath: /opt/corda/certificates
+      containers:
+        - name: corda
+          image: "{{ cr_url }}/{{ project_code }}/trading-corda:latest"
+          workingDir: /opt/corda/
+          command: ["java", "-jar", "corda.jar"]
+          volumeMounts:
+            - name: node-config
+              mountPath: /opt/corda/node.conf
+              subPath: node.conf
+            - name: certificates
+              mountPath: /opt/corda/certificates
+        - name: web-server
+          image: "{{ cr_url }}/{{ project_code }}/trading-web:latest"
+          command: ["java", "-jar", "corda-webserver.jar"]
+          volumeMounts:
+            - name: node-config
+              mountPath: /opt/corda/node.conf
+              subPath: node.conf
+            - name: certificates
+              mountPath: /opt/corda/certificates
+      imagePullSecrets:
+        - name: "{{ image_pull_secret_name }}"
+  selector:
+    matchLabels:
+      app: trading-party-{{ party_name }}
+      

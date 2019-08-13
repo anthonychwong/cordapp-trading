@@ -1,0 +1,9 @@
+---
+- name: check if namespace exists
+  shell: "kubectl get namespaces {{ k8s_namespace }}"
+  register: namespace_check_result
+  ignore_errors: true
+
+- name: create namespace
+  shell: "kubectl create namespace {{ k8s_namespace }}"
+  when: namespace_check_result.rc != 0

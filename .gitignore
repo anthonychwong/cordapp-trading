@@ -78,3 +78,7 @@ crashlytics-build.properties
 
 # docs related
 docs/virtualenv/
+infra/ansible/roles/build-corda-image/temp/
+infra/ansible/roles/build-webserver-image/temp
+infra/ansible/roles/deploy-resources/temp
+infra/ansible/*.retry

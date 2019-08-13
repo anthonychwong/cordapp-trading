@@ -1,0 +1,35 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: network-map
+  namespace: {{ k8s_namespace }}
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: network-map
+    spec:
+      containers:
+        - image: cordite/network-map:v0.3.6
+          name: network-map
+          ports:
+            - containerPort: 8080
+              name: http
+  selector:
+    matchLabels:
+      app: network-map
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: network-map
+  namespace: {{ k8s_namespace }}
+spec:
+  selector:
+    app: network-map
+  type: NodePort
+  ports:
+    - port: 8080
+      protocol: TCP

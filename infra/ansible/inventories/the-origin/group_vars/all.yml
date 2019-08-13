@@ -1,0 +1,22 @@
+---
+
+project_code: trading
+ 
+# the url to container registry to be deployed to
+cr_url:
+k8s_namespace: "{{ project_code }}"
+# secret to pull image from container registry defined in above, which is stored on k8s cluster in same namespace
+image_pull_secret_name: 
+
+corda_jar_url: http://central.maven.org/maven2/net/corda/corda/corda-3.0/corda-corda-3.0.jar
+
+cordapp_jars_base_dir: "{{ role_path }}/../../../../kotlin-source/build/nodes/PartyA/cordapps"
+
+cordapp_jars:
+  - "{{ cordapp_jars_base_dir }}/corda-finance-3.1-corda.jar"
+  - "{{ cordapp_jars_base_dir }}/cordapp-trading-0.1.jar"
+
+websrver_jars_base_dir: "{{ role_path }}/../../../../kotlin-source/build/nodes/PartyA"
+
+websrver_jars:
+  - "{{ websrver_jars_base_dir }}/corda-webserver.jar"

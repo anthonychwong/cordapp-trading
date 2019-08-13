@@ -1,0 +1,25 @@
+---
+- hosts: localhost
+  become: false
+  roles:
+    - { role: build-corda-image }
+    - { role: build-webserver-image }
+    - { role: prepare-k8s }
+
+- name: deploy network map
+  hosts: network-map
+  connection: local
+  become: false
+  vars:
+    template_path: deployment/network-map.deployment.template.yml
+  roles:
+    - { role: deploy-resources }
+
+- name: deploy parties
+  hosts: party
+  connection: local
+  become: false
+  vars:
+    template_path: deployment/party.deployment.template.yml
+  roles:
+    - { role: deploy-resources }

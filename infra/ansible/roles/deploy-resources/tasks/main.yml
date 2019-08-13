@@ -1,0 +1,24 @@
+---
+- set_fact:
+    working_dir: "{{ role_path }}/temp"
+
+- set_fact:
+    resource_def_path: "{{ working_dir }}/{{ ansible_date_time.iso8601_micro | to_uuid }}.yml"
+
+- name: remove previously generated resource definitions if any
+  file:
+    state: absent
+    path: "{{ resource_def_path }}"
+
+- name: prepare resource definitions
+  template:
+    src: "{{ template_path }}"
+    dest: "{{ resource_def_path }}"
+
+- name: deploy resource definitions
+  shell: "kubectl apply -f {{ resource_def_path }} --namespace={{ k8s_namespace }}"
+
+- name: clean up generated resource definitions
+  file:
+    state: absent
+    path: "{{ resource_def_path }}"
